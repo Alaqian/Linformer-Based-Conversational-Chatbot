@@ -16,33 +16,26 @@ def get_EF(input_size, dim, bias=True):
     torch.nn.init.xavier_normal_(lin.weight)
     return lin
 
-class MultiHeadAttention(nn.Module):
-    def __init__(self, num_heads, emb_dim, dim_k = None, dropout = 0.1):
+class LinformerMultiHeadAttention(nn.Module):
+    def __init__(self, num_heads, emb_dim, linear_dim, dim_k = None, dropout = 0.1):
         super().__init__()
         
         self.emb_dim = emb_dim
+        self.linear_dim = linear_dim
         self.dim_k = dim_k if dim_k else emb_dim // num_heads
         self.num_heads = num_heads
         self.q_linear = nn.Linear(emb_dim,self.dim_k*num_heads)
         self.k_linear = nn.Linear(emb_dim,self.dim_k*num_heads)
         self.v_linear = nn.Linear(emb_dim,self.dim_k*num_heads)
-        self.e_linear = nn.Linear(emb_dim,32*num_heads)
-        self.f_linear = nn.Linear(emb_dim,32*num_heads)
+        self.e_linear = nn.Linear(emb_dim,self.linear_dim*num_heads)
+        self.f_linear = nn.Linear(emb_dim,self.linear_dim*num_heads)
 
         self.dropout = nn.Dropout(dropout)
         self.out = nn.Linear(self.dim_k*num_heads,emb_dim)
-    
-    def attention(self, q, k, v, e, f, dim_k, mask=None, dropout=None, explain=False):
-       
-        if explain: print('q, k', q.shape, k.shape)
-        e = e.transpose(-2, -1)
-        print("t", t.shape)
-        # Linear attention
-        k = torch.matmul(k, e)
 
+    def attention(self, q, k, v, dim_k, mask=None, dropout=None, explain=False):
         k = k.transpose(-2, -1)
-        t = torch.matmul(q, k)
-        print("t", t.shape)
+        if explain: print('q, k', q.shape, k.shape)
         # matrix multiplication is done using the last two dimensions
         # (batch_size,num_heads,q_seq_len,dim_k)X(batch_size,num_heads,dim_k,k_seq_len)
         #(batch_size,num_heads,q_seq_len,k_seq_len)
@@ -54,12 +47,51 @@ class MultiHeadAttention(nn.Module):
             scores = scores.masked_fill(mask == 0, -1e9) 
         softscores = F.softmax(scores, dim=-1)
         if dropout is not None: softscores = dropout(softscores)
-        v = torch.matmul(v, f)
+            
         #(batch_size,num_heads,seq_len,seq_len)X(batch_size,num_heads,seq_len,dim_k)
         output = torch.matmul(softscores, v)
         return output, scores #=(batch_size,num_heads,seq_len,dim_k)
+
+    def linearAttention(self, q, k, v, e, f, dim_k, mask=None, dropout=None, explain=False):
+        e = e.transpose(-2, -1)
+        if explain: print('e, k before matmul: ', e.shape, k.shape)
+        # Linear attention
+        k = torch.matmul(e, k)
+        if explain:  print("e*k", k.shape)
+        k = k.transpose(-2, -1)
+        if explain: print('q, k before matmul: ', q.shape, k.shape)
+        if explain:   print("q, k", torch.matmul(q, k).shape)
+        # matrix multiplication is done using the last two dimensions
+        # (batch_size,num_heads,q_seq_len,dim_k)X(batch_size,num_heads,dim_k,k_seq_len)
+        # (batch_size,num_heads,q_seq_len,k_seq_len)
+        scores = torch.matmul(q, k) / math.sqrt(dim_k) 
+        # scores = scores.transpose(-2, -1)
+        if explain: print('scores.shape', scores.shape)
+        # print("score", scores)
+        if mask is not None:
+            if explain: print('mask.shape before narrow', mask.shape)
+            mask = mask.narrow(2,0,scores.shape[-1])
+            if explain: print('mask.shape before unsqueeze', mask.shape)
+            # print("mask before unsqueeze", mask)
+            mask = mask.unsqueeze(1)
+            # print("mask", mask)
+            if explain: print('mask.shape after unsqueeze', mask.shape)
+            scores = scores.masked_fill(mask == 0, -1e9) 
+        softscores = F.softmax(scores, dim=-1)
+        if explain: print('softscores.shape', softscores.shape)
+        # if explain: print('softscores',softscores)
+        # softscores = softscores.transpose(-2, -1)
+        if dropout is not None: softscores = dropout(softscores)
+        f = f.transpose(-2, -1)
+        if explain: print('f, v', f.shape, v.shape)
+        v = torch.matmul(f, v)
+        #(batch_size,num_heads,seq_len,seq_len)X(batch_size,num_heads,seq_len,dim_k)
+        output = torch.matmul(softscores, v)
+        if explain: print('output.shape', output.shape)
+        # if explain: print('output', output)
+        return output, scores #=(batch_size,num_heads,seq_len,dim_k)
     
-    def forward(self, q, k, v, e, f, mask=None, explain=False):
+    def forward(self, q, k, v, mask=None, explain=False):
         '''
         inputs:
             q has shape (batch size, q_sequence length, embedding dimensions)
@@ -79,45 +111,46 @@ class MultiHeadAttention(nn.Module):
         q = self.q_linear(q)
         k = self.k_linear(k)
         v = self.v_linear(v)
-        e = self.e_linear(e)
-        f = self.f_linear(f)
-        print("k shape", k.shape)
-        print("e shape", e.shape)
+        e = self.e_linear(k)
+        f = self.f_linear(v)
         if explain: print("(batch size, sequence length, dim_k * num_heads)", k.shape)
         # k,q,v are each shape (batch size, sequence length, num_heads, dim_k)
         k = k.view(batch_size,-1,self.num_heads,self.dim_k)
         q = q.view(batch_size,-1,self.num_heads,self.dim_k)
         v = v.view(batch_size,-1,self.num_heads,self.dim_k)
-        e = e.view(batch_size,-1,self.num_heads,32)
-        f = f.view(batch_size,-1,self.num_heads,32)
-        print("k view shape", k.shape)
-        print("e view shape", e.shape)
+        e = e.view(batch_size,-1,self.num_heads,self.linear_dim)
+        f = f.view(batch_size,-1,self.num_heads,self.linear_dim)
         # transpose to shape (batch_size, num_heads, sequence length, dim_k)
         k = k.transpose(1,2)
         q = q.transpose(1,2)
         v = v.transpose(1,2)
         e = e.transpose(1,2)
         f = f.transpose(1,2)
-        print("k transpose shape", k.shape)
-        print("e transpose shape", e.shape)
         if explain: print("(batch_size,num_heads,seq_length,dim_k)",k.shape)
         # calculate attention using function we will define next
-        attn, scores = self.attention(q, k, v, e, f, self.dim_k, mask, self.dropout, True)
+        if explain:  print('length of e, k', e.shape[-1], k.shape[-2])
+        if(e.shape[-1] < k.shape[-2]):
+            if explain:  print('go linear')
+            attn, scores = self.linearAttention(q, k, v, e, f, self.dim_k, mask, self.dropout, explain)
+        else:
+            if explain:  print('go basic')
+            attn, scores = self.attention(q, k, v, self.dim_k, mask, self.dropout, explain)
+        
         if explain: print("attn(batch_size,num_heads,seq_length,dim_k)", attn.shape)
         # concatenate heads and 
         concat=attn.transpose(1,2).contiguous().view(batch_size,-1,self.dim_k*self.num_heads)
         if explain: print("concat.shape", concat.shape)
         # put through final linear layer
         output = self.out(concat)
-        if explain: print("MultiHeadAttention output.shape", output.shape)
+        if explain: print("LinformerMultiHeadAttention output.shape", output.shape)
         return output, scores
 
-class EncoderLayer(nn.Module):
-    def __init__(self, emb_dim, heads, dropout=0.1):
+class LinformerEncoderLayer(nn.Module):
+    def __init__(self, emb_dim, linear_dim, heads, dropout=0.1):
         super().__init__()
         self.norm_1 = Norm(emb_dim)
         self.dropout_1 = nn.Dropout(dropout)
-        self.attn = MultiHeadAttention(heads, emb_dim, dropout=dropout)
+        self.attn = LinformerMultiHeadAttention(heads, emb_dim, linear_dim, dropout=dropout)
         self.norm_2 = Norm(emb_dim)
         self.ff = FeedForward(emb_dim, dropout=dropout)
         self.dropout_2 = nn.Dropout(dropout)
@@ -131,19 +164,19 @@ class EncoderLayer(nn.Module):
             shape (batch size, sequence length, embedding dimensions)
         '''
         x2 = self.norm_1(vector_sequence)
-        x2_attn, x2_scores = self.attn(x2,x2,x2,x2,x2,mask)
+        x2_attn, x2_scores = self.attn(x2,x2,x2,mask)
         vector_sequence = vector_sequence + self.dropout_1(x2_attn)
         x2 = self.norm_2(vector_sequence)
         vector_sequence = vector_sequence + self.dropout_2(self.ff(x2))
         return vector_sequence
 
-class Encoder(nn.Module):
-    def __init__(self, vocab_size, emb_dim, n_layers, heads, dropout):
+class LinformerEncoder(nn.Module):
+    def __init__(self, vocab_size, emb_dim, linear_dim, n_layers, heads, dropout):
         super().__init__()
         self.n_layers = n_layers
         self.embed = Embedder(vocab_size, emb_dim)
         self.pe = PositionalEncoder(emb_dim, dropout=dropout)
-        self.layers = get_clones(EncoderLayer(emb_dim, heads, dropout), n_layers)
+        self.layers = get_clones(LinformerEncoderLayer(emb_dim, linear_dim, heads, dropout), n_layers)
         self.norm = Norm(emb_dim)
     def forward(self, source_sequence, source_mask):
         '''
@@ -160,9 +193,9 @@ class Encoder(nn.Module):
         vector_sequence = self.norm(vector_sequence)
         return vector_sequence
 
-class DecoderLayer(nn.Module):
+class LinformerDecoderLayer(nn.Module):
 
-    def __init__(self, emb_dim, heads, dropout=0.1):
+    def __init__(self, emb_dim, linear_dim, heads, dropout=0.1):
         super().__init__()
         self.norm_1 = Norm(emb_dim)
         self.norm_2 = Norm(emb_dim)
@@ -172,8 +205,8 @@ class DecoderLayer(nn.Module):
         self.dropout_2 = nn.Dropout(dropout)
         self.dropout_3 = nn.Dropout(dropout)
         
-        self.attn_1 = MultiHeadAttention(heads, emb_dim, dropout=dropout)
-        self.attn_2 = MultiHeadAttention(heads, emb_dim, dropout=dropout)
+        self.attn_1 = LinformerMultiHeadAttention(heads, emb_dim, linear_dim, dropout=dropout)
+        self.attn_2 = LinformerMultiHeadAttention(heads, emb_dim, linear_dim, dropout=dropout)
         self.ff = FeedForward(emb_dim, dropout=dropout)
 
     def forward(self, de_out, de_mask, en_out, en_mask):
@@ -198,7 +231,7 @@ class DecoderLayer(nn.Module):
         de_out = de_out + self.dropout_3(self.ff(de_nrm))
         return de_out
 
-class Decoder(nn.Module):
+class LinformerDecoder(nn.Module):
     '''
     If your target sequence is `see` `ya` and you want to train on the entire 
     sequence against the target, you would use `<sos>` `see`  `ya`
@@ -207,12 +240,12 @@ class Decoder(nn.Module):
     as the target in the loss function. The inclusion of the `<sos>`
     for the (decoder ouputs so far) and `<eos>` for the 
     '''
-    def __init__(self, vocab_size, emb_dim, n_layers, heads, dropout):
+    def __init__(self, vocab_size, emb_dim, linear_dim, n_layers, heads, dropout):
         super().__init__()
         self.n_layers = n_layers
         self.embed = Embedder(vocab_size, emb_dim)
         self.pe = PositionalEncoder(emb_dim, dropout=dropout)
-        self.layers = get_clones(DecoderLayer(emb_dim, heads, dropout), n_layers)
+        self.layers = get_clones(LinformerDecoderLayer(emb_dim, linear_dim, heads, dropout), n_layers)
         self.norm = Norm(emb_dim)
     def forward(self, de_toks, de_mask, en_vecs, en_mask):
         '''
@@ -232,10 +265,10 @@ class Decoder(nn.Module):
         return self.norm(x)
 
 class Linformer(nn.Module):
-    def __init__(self, in_vocab_size, out_vocab_size, emb_dim, n_layers, heads, dropout):
+    def __init__(self, in_vocab_size, out_vocab_size, emb_dim, linear_dim, n_layers, heads, dropout):
         super().__init__()
-        self.encoder = Encoder(in_vocab_size, emb_dim, n_layers, heads, dropout)
-        self.decoder = Decoder(out_vocab_size, emb_dim, n_layers, heads, dropout)
+        self.encoder = LinformerEncoder(in_vocab_size, emb_dim, linear_dim, n_layers, heads, dropout)
+        self.decoder = LinformerDecoder(out_vocab_size, emb_dim, linear_dim, n_layers, heads, dropout)
         self.out = nn.Linear(emb_dim, out_vocab_size)
     def forward(self, src_seq, src_mask, trg_seq,  trg_mask):
         e_output = self.encoder(src_seq, src_mask)

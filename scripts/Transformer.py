@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from scripts.TransLinsUtils import *
 
 
-class MultiHeadAttention(nn.Module):
+class TransformerMultiHeadAttention(nn.Module):
     def __init__(self, num_heads, emb_dim, dim_k = None, dropout = 0.1):
         super().__init__()
         
@@ -78,15 +78,15 @@ class MultiHeadAttention(nn.Module):
         if explain: print("concat.shape", concat.shape)
         # put through final linear layer
         output = self.out(concat)
-        if explain: print("MultiHeadAttention output.shape", output.shape)
+        if explain: print("TransformerMultiHeadAttention output.shape", output.shape)
         return output, scores
 
-class EncoderLayer(nn.Module):
+class TransformerEncoderLayer(nn.Module):
     def __init__(self, emb_dim, heads, dropout=0.1):
         super().__init__()
         self.norm_1 = Norm(emb_dim)
         self.dropout_1 = nn.Dropout(dropout)
-        self.attn = MultiHeadAttention(heads, emb_dim, dropout=dropout)
+        self.attn = TransformerMultiHeadAttention(heads, emb_dim, dropout=dropout)
         self.norm_2 = Norm(emb_dim)
         self.ff = FeedForward(emb_dim, dropout=dropout)
         self.dropout_2 = nn.Dropout(dropout)
@@ -106,13 +106,13 @@ class EncoderLayer(nn.Module):
         vector_sequence = vector_sequence + self.dropout_2(self.ff(x2))
         return vector_sequence
 
-class Encoder(nn.Module):
+class TransformerEncoder(nn.Module):
     def __init__(self, vocab_size, emb_dim, n_layers, heads, dropout):
         super().__init__()
         self.n_layers = n_layers
         self.embed = Embedder(vocab_size, emb_dim)
         self.pe = PositionalEncoder(emb_dim, dropout=dropout)
-        self.layers = get_clones(EncoderLayer(emb_dim, heads, dropout), n_layers)
+        self.layers = get_clones(TransformerEncoderLayer(emb_dim, heads, dropout), n_layers)
         self.norm = Norm(emb_dim)
     def forward(self, source_sequence, source_mask):
         '''
@@ -129,7 +129,7 @@ class Encoder(nn.Module):
         vector_sequence = self.norm(vector_sequence)
         return vector_sequence
 
-class DecoderLayer(nn.Module):
+class TransformerDecoderLayer(nn.Module):
 
     def __init__(self, emb_dim, heads, dropout=0.1):
         super().__init__()
@@ -141,8 +141,8 @@ class DecoderLayer(nn.Module):
         self.dropout_2 = nn.Dropout(dropout)
         self.dropout_3 = nn.Dropout(dropout)
         
-        self.attn_1 = MultiHeadAttention(heads, emb_dim, dropout=dropout)
-        self.attn_2 = MultiHeadAttention(heads, emb_dim, dropout=dropout)
+        self.attn_1 = TransformerMultiHeadAttention(heads, emb_dim, dropout=dropout)
+        self.attn_2 = TransformerMultiHeadAttention(heads, emb_dim, dropout=dropout)
         self.ff = FeedForward(emb_dim, dropout=dropout)
 
     def forward(self, de_out, de_mask, en_out, en_mask):
@@ -167,7 +167,7 @@ class DecoderLayer(nn.Module):
         de_out = de_out + self.dropout_3(self.ff(de_nrm))
         return de_out
 
-class Decoder(nn.Module):
+class TransformerDecoder(nn.Module):
     '''
     If your target sequence is `see` `ya` and you want to train on the entire 
     sequence against the target, you would use `<sos>` `see`  `ya`
@@ -181,7 +181,7 @@ class Decoder(nn.Module):
         self.n_layers = n_layers
         self.embed = Embedder(vocab_size, emb_dim)
         self.pe = PositionalEncoder(emb_dim, dropout=dropout)
-        self.layers = get_clones(DecoderLayer(emb_dim, heads, dropout), n_layers)
+        self.layers = get_clones(TransformerDecoderLayer(emb_dim, heads, dropout), n_layers)
         self.norm = Norm(emb_dim)
     def forward(self, de_toks, de_mask, en_vecs, en_mask):
         '''
@@ -203,8 +203,8 @@ class Decoder(nn.Module):
 class Transformer(nn.Module):
     def __init__(self, in_vocab_size, out_vocab_size, emb_dim, n_layers, heads, dropout):
         super().__init__()
-        self.encoder = Encoder(in_vocab_size, emb_dim, n_layers, heads, dropout)
-        self.decoder = Decoder(out_vocab_size, emb_dim, n_layers, heads, dropout)
+        self.encoder = TransformerEncoder(in_vocab_size, emb_dim, n_layers, heads, dropout)
+        self.decoder = TransformerDecoder(out_vocab_size, emb_dim, n_layers, heads, dropout)
         self.out = nn.Linear(emb_dim, out_vocab_size)
     def forward(self, src_seq, src_mask, trg_seq,  trg_mask):
         e_output = self.encoder(src_seq, src_mask)
