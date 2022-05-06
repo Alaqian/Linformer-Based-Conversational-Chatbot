@@ -37,7 +37,7 @@ class Tokenizer(object):
         sentence = re.sub(r"she's", "she is", sentence)
         sentence = re.sub(r"it's", "it is", sentence)
         sentence = re.sub(r"that's", "that is", sentence)
-        sentence = re.sub(r"what's", "that is", sentence)
+        sentence = re.sub(r"what's", "what is", sentence)
         sentence = re.sub(r"where's", "where is", sentence)
         sentence = re.sub(r"how's", "how is", sentence)
         sentence = re.sub(r"\'ll", " will", sentence)

@@ -71,7 +71,48 @@ def get_synonym(word, field, explain=False):
                 return field.vocab.stoi[l.name()]
     return 0 # if we cannot find a synonym, return 0
 
-def talk_to_chloe(input_str, model, opt, infield, outfield):
+# def linformer_talk(input_str, model, opt, infield, outfield):
+#     '''
+#     input:
+#         input_str is a string, it is what you want to say to the dialogue model
+#         model is a Transformer model with encoder, decoder and a last layer linear transformation
+#         opt is an options object with the maximum length of the output sequence opt.max_len
+#         infield and outfield are the data.fields that store the vocabulary
+#     output:
+#         an output string response from the dialogue model
+    
+#     Note: this version assumes we are evaluating the model on CPU 
+#     '''
+#     model.eval()
+#     model.cpu()
+#     input_sequence = string2tensor(input_str, infield , explain=True) # string to tensor 
+#     input_mask = (input_sequence != infield.vocab.stoi['<pad>']).unsqueeze(-2) #make input mask
+#     encoding = model.encoder(input_sequence, input_mask) # use the encoder rerepresent the input
+#     init_tok = outfield.vocab.stoi['<sos>'] # this is the integer for the start token
+#     decoder_input = torch.LongTensor([[init_tok]]) # use start token to initiate the decoder
+    
+#     # continue obtaining the next decoder token until decoder outputs and end token or til max_len 
+#     for pos in range(opt.max_len):
+#         decoder_input_mask = nopeak_mask(size=pos+1, opt=opt) # make target mask, pos+1 casue pos starts at 0
+#         # the out vector contains the logits that are rebalanced by the softmax
+#         out = model.out(model.decoder(decoder_input, decoder_input_mask, encoding, input_mask))
+#         softout = F.softmax(out, dim=-1) 
+#         #softout is a categorical probability distribution over the output vocab
+#         distr = Categorical(probs=softout)
+#         action = distr.sample()[:,-1].unsqueeze(0) # sample from that distribution to get next token
+#         # concatenate that token to our running list of output tokens 
+#         decoder_input = torch.cat((decoder_input, action), dim=1) 
+#         # if the model outputs an end of sentence token, it is done with this sentence
+#         if outfield.vocab.itos[action] == '<eos>':
+#             # [0] because we are assuming batch size of 1 
+#             # [1:-1] excludes the start and end token from the output string 
+#             de_str = ' '.join([outfield.vocab.itos[tok] for tok in decoder_input[0][1:-1]])
+#             return de_str
+        
+#     de_str = ' '.join([outfield.vocab.itos[tok] for tok in decoder_input[0]])
+#     return de_str
+
+def transformer_talk(input_str, model, opt, infield, outfield):
     '''
     input:
         input_str is a string, it is what you want to say to the dialogue model
@@ -121,29 +162,35 @@ def linformer_trainer(model, train_data_iterator, train_options, test_data_itera
         print("==> training on cpu")
 
     model.train()
-    start = time.time()
+    start = time.monotonic()
+
     best_loss = 100
     iters = len(train_data_iterator)
     for epoch in range(train_options.epochs):
         train_total_loss = 0
         for i, batch in enumerate(train_data_iterator):
-            src = batch.listen
-            trg = batch.reply
-            diff = abs(len(batch.listen) - len(batch.reply))
-            if len(batch.listen) > len(batch.reply):
-                trg = torch.nn.functional.pad(input=trg, pad=(0,0,0,diff), mode='constant', value=0)
-            elif len(batch.listen) < len(batch.reply):
-                src = torch.nn.functional.pad(input=src, pad=(0,0,0,diff), mode='constant', value=0)
-            # print("src shape", src.shape)
-            diff = abs(train_options.batchsize - src.shape[1])
-            if train_options.batchsize > src.shape[1]:
-                src = torch.nn.functional.pad(input=src, pad=(0,diff,0,0), mode='constant', value=0)
-            if train_options.batchsize > trg.shape[1]:
-                trg = torch.nn.functional.pad(input=trg, pad=(0,diff,0,0), mode='constant', value=0)
-            # print("src shape", src.shape)
+            each_iter = time.monotonic()
+            src = batch.listen.transpose(0,1)
+            trg = batch.reply.transpose(0,1)
+            trg = trg[:, :-1] #remove last ward e.g. period
+            batchsize, src_seq_len = src.shape
+            if src_seq_len < train_options.max_len:
+                src_diff = abs(src_seq_len - train_options.max_len)
+                src = torch.nn.functional.pad(input=src, pad=(0,src_diff,0,0), mode='constant', value=train_options.trg_pad)
+            elif src_seq_len > train_options.max_len:
+                src = src.narrow(1,0,train_options.max_len)
+
+            batchsize, trg_seq_len = trg.shape
+            if trg_seq_len < train_options.max_len:
+                trg_diff = abs(trg_seq_len - train_options.max_len)
+                trg = torch.nn.functional.pad(input=trg, pad=(0,trg_diff,0,0), mode='constant', value=train_options.trg_pad)
+            elif trg_seq_len > train_options.max_len:
+                trg = trg.narrow(1,0,train_options.max_len)
+
+
             preds = model(src,trg)
             ys = trg.contiguous().view(-1)
-            preds = preds.contiguous().view(-1, preds.size(-1))
+            preds = preds.view(-1, preds.size(-1))
             optimizer.zero_grad()
             train_batch_loss = F.cross_entropy(preds, ys, ignore_index = train_options.trg_pad)
             train_batch_loss.backward()
@@ -154,6 +201,8 @@ def linformer_trainer(model, train_data_iterator, train_options, test_data_itera
             if scheduler_name == "warmup": 
                 scheduler.step()
             # print("batch loss", train_batch_loss)
+            # print("%.6fsecs: train iter *%d*, train size 1 *%d*, train size 2 *%d*"  %(time.monotonic() - each_iter, i+1,len(batch.listen),len(batch.reply)))
+            
         if scheduler_name == "warmup":
             scheduler.print_lr(epoch+i)
         train_epoch_loss = train_total_loss/(num_batches(train_data_iterator)+1)
@@ -165,23 +214,25 @@ def linformer_trainer(model, train_data_iterator, train_options, test_data_itera
         test_total_loss = 0
         with torch.no_grad():
             for i, batch in enumerate(test_data_iterator): 
-                src = batch.listen
-                trg = batch.reply
-                diff = abs(len(batch.listen) - len(batch.reply))
-                if len(batch.listen) > len(batch.reply):
-                    trg = torch.nn.functional.pad(input=trg, pad=(0,0,0,diff), mode='constant', value=0)
-                elif len(batch.listen) < len(batch.reply):
-                    src = torch.nn.functional.pad(input=src, pad=(0,0,0,diff), mode='constant', value=0)
-                # print("src shape", src.shape) 
-                diff = abs(test_options.batchsize - src.shape[1])
-                if test_options.batchsize > src.shape[1]:
-                    src = torch.nn.functional.pad(input=src, pad=(0,diff,0,0), mode='constant', value=0)
-                if test_options.batchsize > trg.shape[1]:
-                    trg = torch.nn.functional.pad(input=trg, pad=(0,diff,0,0), mode='constant', value=0)
-                # print("src shape", src.shape)              
+                src = batch.listen.transpose(0,1)
+                trg = batch.reply.transpose(0,1)
+                trg = trg[:, :-1]
+                batchsize, src_seq_len = src.shape
+                if src_seq_len < train_options.max_len:
+                    src_diff = abs(src_seq_len - test_options.max_len)
+                    src = torch.nn.functional.pad(input=src, pad=(0,src_diff,0,0), mode='constant', value=test_options.trg_pad)
+                elif src_seq_len > train_options.max_len:
+                    src = src.narrow(1,0,train_options.max_len)
+                batchsize, trg_seq_len = trg.shape
+                if trg_seq_len < train_options.max_len:
+                    trg_diff = abs(trg_seq_len - test_options.max_len)
+                    trg = torch.nn.functional.pad(input=trg, pad=(0,trg_diff,0,0), mode='constant', value=test_options.trg_pad)
+                elif trg_seq_len > train_options.max_len:
+                    trg = trg.narrow(1,0,train_options.max_len)
+                    
                 preds = model(src,trg)
                 ys = trg.contiguous().view(-1)
-                preds = preds.contiguous().view(-1, preds.size(-1))
+                preds = preds.view(-1, preds.size(-1))
                 test_batch_loss = F.cross_entropy(preds, ys, ignore_index = test_options.trg_pad)
                 test_total_loss += test_batch_loss.item()
 
@@ -200,8 +251,8 @@ def linformer_trainer(model, train_data_iterator, train_options, test_data_itera
         # if test_epoch_loss < best_loss:
         #     best_loss = test_epoch_loss
         #     torch.save(model.state_dict(), train_options.save_path)
-        print("%.3fm: train epoch *%d*, loss = *%.3f*" %((time.time() - start)//60, epoch+1, train_epoch_loss), end=", ")
-        print("%.3fm: test epoch *%d*, loss = *%.3f*, best loss = *%.3f*" %((time.time() - start)//60, epoch+1, test_epoch_loss, best_loss) , flush=True)
+        print("%.3fm: train epoch *%d*, loss = *%.3f*" %((time.monotonic() - start)/60, epoch+1, train_epoch_loss), end=", ")
+        print("%.3fm: test epoch *%d*, loss = *%.3f*, best loss = *%.3f*" %((time.monotonic() - start)/60, epoch+1, test_epoch_loss, best_loss) , flush=True)
         train_total_loss = 0
         test_total_loss = 0
 
@@ -214,13 +265,14 @@ def transformer_trainer(model, train_data_iterator, train_options, test_data_ite
         print("==> training on cpu")
 
     model.train()
-    start = time.time()
+    start = time.monotonic()
     best_loss = 100
     
     iters = len(train_data_iterator)
     for epoch in range(train_options.epochs):
         train_total_loss = 0
         for i, batch in enumerate(train_data_iterator): 
+            each_iter = time.monotonic()
             src = batch.listen.transpose(0,1)
             trg = batch.reply.transpose(0,1)
             # print("src", src.shape)
@@ -241,6 +293,7 @@ def transformer_trainer(model, train_data_iterator, train_options, test_data_ite
             if scheduler_name == "warmup": 
                 scheduler.step()
             # print("batch loss", train_batch_loss)
+            # print("%.6fsecs: train iter *%d*, train size 1 *%d*, train size 2 *%d*"  %(time.monotonic() - each_iter, i+1,len(batch.listen),len(batch.reply)))
         if scheduler_name == "warmup":
             scheduler.print_lr(epoch+i)
         train_epoch_loss = train_total_loss/(num_batches(train_data_iterator)+1)
@@ -276,8 +329,8 @@ def transformer_trainer(model, train_data_iterator, train_options, test_data_ite
         # if test_epoch_loss < best_loss:
         #     best_loss = test_epoch_loss
         #     torch.save(model.state_dict(), train_options.save_path)
-        print("%.3fm: train epoch *%d*, loss = *%.3f*" %((time.time() - start)//60, epoch+1, train_epoch_loss), end=", ")
-        print("%.3fm: test epoch *%d*, loss = *%.3f*, best loss = *%.3f*" %((time.time() - start)//60, epoch+1, test_epoch_loss, best_loss) , flush=True)
+        print("%.3fm: train epoch *%d*, loss = *%.3f*" %((time.monotonic() - start)/60, epoch+1, train_epoch_loss), end=", ")
+        print("%.3fm: test epoch *%d*, loss = *%.3f*, best loss = *%.3f*" %((time.monotonic() - start)/60, epoch+1, test_epoch_loss, best_loss) , flush=True)
         train_total_loss = 0
         test_total_loss = 0
 

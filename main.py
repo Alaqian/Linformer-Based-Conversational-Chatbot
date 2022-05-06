@@ -42,7 +42,7 @@ def main():
 	print(f'==> Name to train data at saved/data/{args.train}')
 	print(f'==> Name to test data at saved/data/{args.test}')
 	
-	opt = Options(batchsize=args.batch, device=torch.device(device), epochs=args.epoch, lr=args.lr, max_len = 20, save_path = f'saved/weights/{args.weight}')
+	opt = Options(batchsize=args.batch, device=torch.device(device), epochs=args.epoch, lr=args.lr, max_len = 25, save_path = f'saved/weights/{args.weight}')
 	print('==> Load Dataset..')
 	train_data_iter, train_infield, train_outfield, train_opt = json2datatools(path = f'saved/data/{args.train}.json', opt=opt, train=True, shuffle=True)
 	print('train input vocab size', len(train_infield.vocab), 'train reply vocab size', len(train_outfield.vocab))
@@ -51,6 +51,7 @@ def main():
 	print("==> Number of train steps per epoch",num_batches(train_data_iter))
 	print("==> Number of test steps per epoch",num_batches(train_data_iter))
 	print('==> Build Model..' )
+
 	# Attention is All You Need's setting
 	emb_dim, n_layers, heads, dropout = args.dimension, args.nlayers, args.heads, 0.1
 
@@ -69,24 +70,25 @@ def main():
 	elif(args.modeler=="linformer"):
 		model = LinformerEncDec(
 		    enc_num_tokens=len(train_infield.vocab),
-		    enc_input_size=args.batch, # Dimension 1 of the input
+		    enc_input_size=opt.max_len, # Dimension 1 of the input
 		    enc_channels=emb_dim, # Dimension 2 of the input
 		    enc_dropout=dropout, # Dropout for attention
 		    enc_dim_k=128, # The second dimension of the P_bar matrix from the paper
 		    enc_dim_ff=2048, # Dimension in the feed forward network
 		    enc_dropout_ff=dropout, # Dropout for feed forward network
 		    enc_nhead=heads, # Number of attention heads
-		    enc_depth=1, # How many times to run the model
+		    enc_depth=n_layers, # How many times to run the model
 		    activation="gelu", # What activation to use. Currently, only gelu and relu supported, and only on ff network.
+
 		    dec_num_tokens=len(train_outfield.vocab),
-		    dec_input_size=args.batch, # Dimension 1 of the input
+		    dec_input_size=opt.max_len, # Dimension 1 of the input
 		    dec_channels=emb_dim, # Dimension 2 of the input
 		    dec_dropout=dropout, # Dropout for attention
 		    dec_dim_k=128, # The second dimension of the P_bar matrix from the paper
 		    dec_dim_ff=2048, # Dimension in the feed forward network
 		    dec_dropout_ff=dropout, # Dropout for feed forward network
 		    dec_nhead=heads, # Number of attention heads
-		    dec_depth=1, # How many times to run the model
+		    dec_depth=n_layers, # How many times to run the model
 		)
 	else:
 		print("Please choose modeler between \"transformer\" and \"linformer\"")
