@@ -6,6 +6,15 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from scripts.TransLinsUtils import *
 
+def get_EF(input_size, dim, bias=True):
+    """
+    Retuns the E or F matrix, initialized via xavier initialization.
+    This is the recommended way to do it according to the authors of the paper.
+    Includes a method for convolution, as well as a method for no additional params.
+    """
+    lin = nn.Linear(input_size, dim, bias)
+    torch.nn.init.xavier_normal_(lin.weight)
+    return lin
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, num_heads, emb_dim, dim_k = None, dropout = 0.1):
@@ -17,13 +26,23 @@ class MultiHeadAttention(nn.Module):
         self.q_linear = nn.Linear(emb_dim,self.dim_k*num_heads)
         self.k_linear = nn.Linear(emb_dim,self.dim_k*num_heads)
         self.v_linear = nn.Linear(emb_dim,self.dim_k*num_heads)
+        self.e_linear = nn.Linear(emb_dim,32*num_heads)
+        self.f_linear = nn.Linear(emb_dim,32*num_heads)
 
         self.dropout = nn.Dropout(dropout)
         self.out = nn.Linear(self.dim_k*num_heads,emb_dim)
     
-    def attention(self, q, k, v, dim_k, mask=None, dropout=None, explain=False):
-        k = k.transpose(-2, -1)
+    def attention(self, q, k, v, e, f, dim_k, mask=None, dropout=None, explain=False):
+       
         if explain: print('q, k', q.shape, k.shape)
+        e = e.transpose(-2, -1)
+        print("t", t.shape)
+        # Linear attention
+        k = torch.matmul(k, e)
+
+        k = k.transpose(-2, -1)
+        t = torch.matmul(q, k)
+        print("t", t.shape)
         # matrix multiplication is done using the last two dimensions
         # (batch_size,num_heads,q_seq_len,dim_k)X(batch_size,num_heads,dim_k,k_seq_len)
         #(batch_size,num_heads,q_seq_len,k_seq_len)
@@ -35,12 +54,12 @@ class MultiHeadAttention(nn.Module):
             scores = scores.masked_fill(mask == 0, -1e9) 
         softscores = F.softmax(scores, dim=-1)
         if dropout is not None: softscores = dropout(softscores)
-            
+        v = torch.matmul(v, f)
         #(batch_size,num_heads,seq_len,seq_len)X(batch_size,num_heads,seq_len,dim_k)
         output = torch.matmul(softscores, v)
         return output, scores #=(batch_size,num_heads,seq_len,dim_k)
     
-    def forward(self, q, k, v, mask=None, explain=False):
+    def forward(self, q, k, v, e, f, mask=None, explain=False):
         '''
         inputs:
             q has shape (batch size, q_sequence length, embedding dimensions)
@@ -60,18 +79,30 @@ class MultiHeadAttention(nn.Module):
         q = self.q_linear(q)
         k = self.k_linear(k)
         v = self.v_linear(v)
+        e = self.e_linear(e)
+        f = self.f_linear(f)
+        print("k shape", k.shape)
+        print("e shape", e.shape)
         if explain: print("(batch size, sequence length, dim_k * num_heads)", k.shape)
         # k,q,v are each shape (batch size, sequence length, num_heads, dim_k)
         k = k.view(batch_size,-1,self.num_heads,self.dim_k)
         q = q.view(batch_size,-1,self.num_heads,self.dim_k)
         v = v.view(batch_size,-1,self.num_heads,self.dim_k)
+        e = e.view(batch_size,-1,self.num_heads,32)
+        f = f.view(batch_size,-1,self.num_heads,32)
+        print("k view shape", k.shape)
+        print("e view shape", e.shape)
         # transpose to shape (batch_size, num_heads, sequence length, dim_k)
         k = k.transpose(1,2)
         q = q.transpose(1,2)
         v = v.transpose(1,2)
+        e = e.transpose(1,2)
+        f = f.transpose(1,2)
+        print("k transpose shape", k.shape)
+        print("e transpose shape", e.shape)
         if explain: print("(batch_size,num_heads,seq_length,dim_k)",k.shape)
         # calculate attention using function we will define next
-        attn, scores = self.attention(q, k, v, self.dim_k, mask, self.dropout, explain)
+        attn, scores = self.attention(q, k, v, e, f, self.dim_k, mask, self.dropout, True)
         if explain: print("attn(batch_size,num_heads,seq_length,dim_k)", attn.shape)
         # concatenate heads and 
         concat=attn.transpose(1,2).contiguous().view(batch_size,-1,self.dim_k*self.num_heads)
@@ -100,7 +131,7 @@ class EncoderLayer(nn.Module):
             shape (batch size, sequence length, embedding dimensions)
         '''
         x2 = self.norm_1(vector_sequence)
-        x2_attn, x2_scores = self.attn(x2,x2,x2,mask)
+        x2_attn, x2_scores = self.attn(x2,x2,x2,x2,x2,mask)
         vector_sequence = vector_sequence + self.dropout_1(x2_attn)
         x2 = self.norm_2(vector_sequence)
         vector_sequence = vector_sequence + self.dropout_2(self.ff(x2))
@@ -200,7 +231,7 @@ class Decoder(nn.Module):
             x = self.layers[i](x, de_mask, en_vecs, en_mask)
         return self.norm(x)
 
-class Transformer(nn.Module):
+class Linformer(nn.Module):
     def __init__(self, in_vocab_size, out_vocab_size, emb_dim, n_layers, heads, dropout):
         super().__init__()
         self.encoder = Encoder(in_vocab_size, emb_dim, n_layers, heads, dropout)
