@@ -22,8 +22,9 @@ def main():
 	parser.add_argument('-v', '--verbose', default=False, help='Print adaptive learning rate?')
 	parser.add_argument('-m', '--modeler', required=True, help='Type: transformer or linformer')
 	parser.add_argument('-c', '--scheduler', required=True, help='Scheduler: cosine or warmup')
+	parser.add_argument('-l', '--linear_dimension', default=512, type=int, help='Linear Dimension of Attention Layers')
 	parser.add_argument('-d', '--dimension', default=512, type=int, help='Dimension of Attention Layers')
-	parser.add_argument('-l', '--nlayers', default=6, type=int, help='Number of Attention Layers')
+	parser.add_argument('-n', '--nlayers', default=6, type=int, help='Number of Attention Layers')
 	parser.add_argument('--heads', default=8, type=int, help='Number of Attention Heads')
 	parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
 	args = parser.parse_args()
@@ -54,6 +55,8 @@ def main():
 
 	# Attention is All You Need's setting
 	emb_dim, n_layers, heads, dropout = args.dimension, args.nlayers, args.heads, 0.1
+	# Linear Attenion's setting
+	linear_dimension = args.linear_dimension
 
 	#There is no theoretical limit on the input length (ie number of tokens for a sentence in NLP) 
 	#for transformers. However in practice, longer inputs will consume more memory.
@@ -68,27 +71,14 @@ def main():
 		)
 
 	elif(args.modeler=="linformer"):
-		model = LinformerEncDec(
-		    enc_num_tokens=len(train_infield.vocab),
-		    enc_input_size=opt.max_len, # Dimension 1 of the input
-		    enc_channels=emb_dim, # Dimension 2 of the input
-		    enc_dropout=dropout, # Dropout for attention
-		    enc_dim_k=128, # The second dimension of the P_bar matrix from the paper
-		    enc_dim_ff=2048, # Dimension in the feed forward network
-		    enc_dropout_ff=dropout, # Dropout for feed forward network
-		    enc_nhead=heads, # Number of attention heads
-		    enc_depth=n_layers, # How many times to run the model
-		    activation="gelu", # What activation to use. Currently, only gelu and relu supported, and only on ff network.
-
-		    dec_num_tokens=len(train_outfield.vocab),
-		    dec_input_size=opt.max_len, # Dimension 1 of the input
-		    dec_channels=emb_dim, # Dimension 2 of the input
-		    dec_dropout=dropout, # Dropout for attention
-		    dec_dim_k=128, # The second dimension of the P_bar matrix from the paper
-		    dec_dim_ff=2048, # Dimension in the feed forward network
-		    dec_dropout_ff=dropout, # Dropout for feed forward network
-		    dec_nhead=heads, # Number of attention heads
-		    dec_depth=n_layers, # How many times to run the model
+		model = Linformer(
+			len(train_infield.vocab), 
+			len(train_outfield.vocab), 
+			emb_dim, 
+			linear_dimension,
+			n_layers, 
+			heads, 
+			dropout
 		)
 	else:
 		print("Please choose modeler between \"transformer\" and \"linformer\"")
@@ -110,13 +100,14 @@ def main():
 		quit()
 
 	print('==> Start Training..' , flush=True)
-	if(args.modeler=="transformer"):
-		transformer_trainer(model, train_data_iter, train_opt, test_data_iter, test_opt, optimizer, scheduler, args.scheduler)
-	elif(args.modeler=="linformer"):
-		linformer_trainer(model, train_data_iter, train_opt, test_data_iter, test_opt, optimizer, scheduler, args.scheduler)
-	else:
-		print("Please choose modeler between \"transformer\" and \"linformer\"")
-		quit()
+	trainer(model, train_data_iter, train_opt, test_data_iter, test_opt, optimizer, scheduler, args.scheduler)
+	# if(args.modeler=="transformer"):
+	# 	transformer_trainer(model, train_data_iter, train_opt, test_data_iter, test_opt, optimizer, scheduler, args.scheduler)
+	# elif(args.modeler=="linformer"):
+	# 	linformer_trainer(model, train_data_iter, train_opt, test_data_iter, test_opt, optimizer, scheduler, args.scheduler)
+	# else:
+	# 	print("Please choose modeler between \"transformer\" and \"linformer\"")
+	# 	quit()
 if __name__ == "__main__":
 	main()	
 
