@@ -5,6 +5,7 @@ from linformer_pytorch import LinformerEncDec
 
 from scripts.MoveData import *
 from scripts.Transformer import *
+from scripts.Linformer import *
 from scripts.TalkTrain import *
 
 def main():
@@ -22,11 +23,11 @@ def main():
 	parser.add_argument('-v', '--verbose', default=False, help='Print adaptive learning rate?')
 	parser.add_argument('-m', '--modeler', required=True, help='Type: transformer or linformer')
 	parser.add_argument('-c', '--scheduler', required=True, help='Scheduler: cosine or warmup')
-	parser.add_argument('-l', '--linear_dimension', default=512, type=int, help='Linear Dimension of Attention Layers')
+	parser.add_argument('-l', '--linear_dimension', default=32, type=int, help='Linear Dimension of Attention Layers')
 	parser.add_argument('-d', '--dimension', default=512, type=int, help='Dimension of Attention Layers')
 	parser.add_argument('-n', '--nlayers', default=6, type=int, help='Number of Attention Layers')
 	parser.add_argument('--heads', default=8, type=int, help='Number of Attention Heads')
-	parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
+	parser.add_argument('--lr', default=0.01, type=float, help='learning rate')1
 	args = parser.parse_args()
 
 	print('==> Program Start..')
