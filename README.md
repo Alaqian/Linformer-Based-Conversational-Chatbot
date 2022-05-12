@@ -1,8 +1,12 @@
 # chatbot-Transformer-&-Linformer
 
+## Introduction (A description of the project)
+
+Transformer has revolutionized the Natural Language Processing field with the attention mechanism. Some of the groundbreaking NLP models (GPT3 and BERT) of recent years are all based on transformer. However, the time and space complexity of transformer is largely dependent on the size of the input sequence. More specifically, the self-attention mechanism of transformer has a time complexity of O(n2) where n is the length of input sequence. Wang et. al. [1] proposed Linformer, a linear complexity O(n) self-attention mechanism, that can speed up the inference speed of the model significantly. We sought to find whether Linformer could be used to train and reduce the inference time in the case of conversational Chatbot, where training input sequences’ lengths are varied.
+
 ## Main requirements
 
-- Python 3.6 to 3.8*
+- Python 3.6
 - torch==1.7.1 (PyTorch)
 - torchtext==0.4.0
 - nltk==3.4.5 (Natural Language Toolkit)
@@ -15,7 +19,13 @@
 
 `$ pip install -r requirements.txt`
 
-[some troubleshoot might be needed](https://github.com/tensorflow/tensorflow/issues/559)
+- test run on default setting
 
-[with enough google searches you can find an answer for almost any problem](https://stackoverflow.com/questions/45912674/attributeerror-module-numpy-core-multiarray-has-no-attribute-einsum)
+`./main.py`
+
+## A description of the repository and code structure
+
+## Example commands to execute the code         
+
+## Results (including charts/tables) and your observations  
 
