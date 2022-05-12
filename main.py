@@ -27,7 +27,7 @@ def main():
 	parser.add_argument('--dimension', default=512, type=int, help='Dimension of Attention Layers')
 	parser.add_argument('--nlayers', default=6, type=int, help='Number of Attention Layers')
 	parser.add_argument('--heads', default=8, type=int, help='Number of Attention Heads')
-	parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
+	parser.add_argument('--lr', default=0.0003, type=float, help='learning rate')
 	args = parser.parse_args()
 
 	print('==> Program Start..')
