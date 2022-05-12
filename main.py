@@ -10,13 +10,13 @@ from scripts.TalkTrain import *
 
 def main():
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	print(device)
+	# print(device)
 	# Parse command line args
 	parser = argparse.ArgumentParser(description='Transformer&Linformer chatbot trainer')
 
-	parser.add_argument('-w', '--weight', default="data_weight", type=str, help='Name to save weights at /saved/weights/<name>')
-	parser.add_argument('-tr', '--train', default="data_train", type=str, help='Name to train file at /saved/data/<name>')
-	parser.add_argument('-te', '--test', default="data_test", type=str, help='Name to test file at /saved/data/<name>')
+	parser.add_argument('-w', '--weight', default="weight", type=str, help='Name to save weights at /saved/weights/<name>')
+	parser.add_argument('-tr', '--train', default="data2_train_9010", type=str, help='Name to train file at /saved/data/<name>')
+	parser.add_argument('-te', '--test', default="data2_test_9010", type=str, help='Name to test file at /saved/data/<name>')
 	parser.add_argument('--batch', default=32, type=int, help='Batch size')
 	parser.add_argument('--epoch', default=200, type=int, help='# of epochs')
 	parser.add_argument('--shuffle', default=False, help='Shuffle validation data?')
