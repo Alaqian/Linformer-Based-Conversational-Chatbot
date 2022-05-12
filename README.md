@@ -6,10 +6,7 @@ Transformer has revolutionized the Natural Language Processing field with the at
 
 ## Main requirements
 
-- Python 3.6
-- torch==1.7.1 (PyTorch)
-- torchtext==0.4.0
-- nltk==3.4.5 (Natural Language Toolkit)
+- Python 3.6 to 3.8 (3.6 preferred)*
 
 *Require for many dependencies in requirement.txt
 .
@@ -21,7 +18,28 @@ Transformer has revolutionized the Natural Language Processing field with the at
 
 - test run on default setting
 
-`./main.py`
+`python main.py
+==> Program Start..
+==> Batch Size: 32
+==> Number of epochs: 200
+==> Shuffle: False
+==> Verbose: False
+==> Modeler: linformer
+==> Linear Dimension: 128
+==> Learning rate: 0.01
+==> Scheduler: plateau
+==> Name to save weights at saved/weights/weight
+==> Name to train data at saved/data/data2_train_9010
+==> Name to test data at saved/data/data2_test_9010
+==> Load Dataset..
+train input vocab size 31507 train reply vocab size 30876
+test input vocab size 14832 test reply vocab size 13950
+==> Number of train steps per epoch 6224
+==> Number of test steps per epoch 6224
+==> Build Model..
+==> Start Training..
+==> a GPU was detected, model will be trained on GPU
+`
 
 ## A description of the repository and code structure
 
