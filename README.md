@@ -9,14 +9,18 @@ Transformer has revolutionized the Natural Language Processing field with the at
 
 *Require for many dependencies in requirement.txt
 ## How to Start
-- install dependencies
+- Install dependencies
 
 `$ pip install -r requirements.txt`
 
-- test run on default setting
+- Test run on default setting
 
-`python main.py`
+`$ python main.py`
+
+- A successful run will look like this
+ 
 ![main](images/main.jpg)
+
 ## A description of the repository and code structure
 
 ## Example commands to execute the code         
