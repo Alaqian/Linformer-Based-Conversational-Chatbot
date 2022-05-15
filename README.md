@@ -7,7 +7,12 @@ Transformer has revolutionized the Natural Language Processing field with the at
 ## Main requirements
 - Python 3.6 to 3.8 (3.6 preferred)*
 
-*Require for many dependencies in requirement.txt
+* Require for many dependencies in requirement.txt
+
+## Special Thanks
+
+This GitHub Repository's implementation heavily influenced by Chloerobotics [5
+
 ## How to Start
 ```
 # Install dependencies
@@ -16,13 +21,35 @@ $ pip install -r requirements.txt
 # Test run on default setting
 $ python main.py
 
-# A successful should look like this
+# A successful run should look like this
 ```
 ![main](images/main.jpg)
 
-## A description of the repository and code structure
+## How to chat with your saved model
+```
+# For Transformer run
+$ python bot.py --model transformer --weight PATH
 
-## Example commands to execute the code         
+# For Linformer run
+$ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIGHT_SETTING
 
+# You should see a prompt like this:
+```
+![main](images/bot.jpg)
+
+## Repository and code structure
+- Execution files are locating in the root directory.
+- Transfomer model, Linformer model, and Tokenizer script are in "scripts" directory.
+- Default saved weight location is "saved/weight" directory.
+- Default data location is "saved/data" directory.
+      
 ## Results (including charts/tables) and your observations  
 
+
+## References
+
+[1] Linformer: Self-Attention with Linear Complexity: https://arxiv.org/pdf/2006.04768.pdf
+[2] Cornell Movie-Dialog Corpus Dataset: https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html
+[3] Deep Learning Based Chatbot Models,  https://arxiv.org/pdf/1908.08835.pdf
+[4] Attention is All You Need, https://arxiv.org/abs/1706.03762
+[5] Chloerobotics, https://github.com/chloerobotics/chloebot
