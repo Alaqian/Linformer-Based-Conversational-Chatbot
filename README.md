@@ -37,6 +37,22 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 ```
 ![main](images/bot.jpg)
 
+## Adjustable parameters
+| Description | DType       | Arguments  | Default | 
+| ----------- | ----------- | ---------- | ------- | 
+| Name to save weights, at /saved/weights/<name> | string | --weight | "weight" | 
+| Name of train data, at /saved/data/<name> | string  | --train | "data2_train_9010" | 
+| Name to test data, at /saved/data/<name> | string  | --test | "data2_test_9010" | 
+| Batch size | int  | --batch | 32 | 
+| # of epochs | int | --epoch | 200 | 
+| Modeler: transformer or linformer | string | --modeler | "linformer" | 
+| Linear Dimension of Attention Layers | int | --linear_dimension | 256 | 
+| Scheduler: plateau, cosine or warmup | str | --scheduler | "plateau" | 
+| Dimension of Attention Layers | int | --dimension | 512 | 
+| Number of Attention Layers | int | --nlayers | 6 | 
+| Number of Attention Heads | int | --heads | 8 | 
+| learning rate | float | --lr | 0.0003 | 
+
 ## Repository and code structure
 - Execution files are locating in the root directory.
 - Transfomer model, Linformer model, and Tokenizer script are in "scripts" directory.
