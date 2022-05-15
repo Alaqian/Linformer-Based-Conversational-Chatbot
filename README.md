@@ -72,7 +72,7 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 
 - We've found the best learning rate at 0.0003 
 
-![learning_rate|50%](images/learning_rate.jpg)
+![learning_rate|813x750, 50%](images/learning_rate.jpg)
 
 ### Selecting scheduler and number of epochs
 
