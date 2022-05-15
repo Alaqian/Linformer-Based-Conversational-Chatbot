@@ -104,7 +104,7 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 
 - Linformer does not reduce inference time for Conversational Chatbot
 
-<img src="https://github.com/katsamapol/chatbot/blob/main/images/time_to_reach_500_epoch.jpg" style="width:50%; margin:auto;">
+<img src="https://github.com/katsamapol/chatbot/blob/main/images/time_to_reach_500_epoch.jpg" style="width:75%; margin:auto;">
 
 ## Conclusion
 
