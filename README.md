@@ -72,7 +72,7 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 
 - We've found the best learning rate at 0.0003 
 
-<img src="https://github.com/katsamapol/chatbot/blob/main/images/learning_rate.jpg" style="width:50%;">
+<img src="https://github.com/katsamapol/chatbot/blob/main/images/learning_rate.jpg" style="width:50%; margin:auto;">
 
 ### Selecting scheduler and number of epochs
 
@@ -104,7 +104,7 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 
 - Linformer does not reduce inference time for Conversational Chatbot
 
-![time_to_reach_500_epoch](images/time_to_reach_500_epoch.jpg)
+<img src="https://github.com/katsamapol/chatbot/blob/main/images/time_to_reach_500_epoch.jpg" style="width:50%; margin:auto;">
 
 ## Conclusion
 
