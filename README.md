@@ -7,11 +7,11 @@ Transformer has revolutionized the Natural Language Processing field with the at
 ## Main requirements
 - Python 3.6 to 3.8 (3.6 preferred)*
 
-* Require for many dependencies in requirement.txt
+\*Require for many dependencies in requirement.txt
 
 ## Special Thanks
 
-This GitHub Repository's implementation heavily influenced by Chloerobotics [5
+This GitHub Repository's implementation heavily influenced by Chloerobotics [5](#references)
 
 ## How to Start
 ```
@@ -46,7 +46,7 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 ## Results (including charts/tables) and your observations  
 
 
-## References
+## <a id="references">References</a>
 
 [1] Linformer: Self-Attention with Linear Complexity: https://arxiv.org/pdf/2006.04768.pdf
 [2] Cornell Movie-Dialog Corpus Dataset: https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html
