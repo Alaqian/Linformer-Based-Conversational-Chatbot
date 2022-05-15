@@ -1,8 +1,8 @@
 # chatbot-Transformer-&-Linformer
 
-## Introduction (A description of the project)
+## Introduction
 
-Transformer has revolutionized the Natural Language Processing field with the attention mechanism. Some of the groundbreaking NLP models (GPT3 and BERT) of recent years are all based on transformer. However, the time and space complexity of transformer is largely dependent on the size of the input sequence. More specifically, the self-attention mechanism of transformer has a time complexity of O(n2) where n is the length of input sequence. Wang et. al. [1] proposed Linformer, a linear complexity O(n) self-attention mechanism, that can speed up the inference speed of the model significantly. We sought to find whether Linformer could be used to train and reduce the inference time in the case of conversational Chatbot, where training input sequences’ lengths are varied.
+Transformer has revolutionized the Natural Language Processing field with the attention mechanism. Some of the groundbreaking NLP models (GPT3 and BERT) of recent years are all based on transformer. However, the time and space complexity of transformer is largely dependent on the size of the input sequence. More specifically, the self-attention mechanism of transformer has a time complexity of O(n2) where n is the length of input sequence. Wang et. al. [1](#references) proposed Linformer, a linear complexity O(n) self-attention mechanism, that can speed up the inference speed of the model significantly. We sought to find whether Linformer could be used to train and reduce the inference time in the case of conversational Chatbot, where training input sequences’ lengths are varied.
 
 ## Main requirements
 - Python 3.6 to 3.8 (3.6 preferred)*
@@ -68,25 +68,47 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
       
 ## Results
 
-### Our selected Learning Rate
+### Selecting Learning Rate
+
+- We've found the best learning rate at 0.0003 
 
 ![learning_rate](images/learning_rate.jpg)
 
-### Our selected Scheduler
+### Selecting scheduler and number of epochs
+
+- We've chosen "Reduce on Plateau" as our learning rate scheduler.
+- Also we've selected 500 epochs for further training because the training losses are flatten after 500 epochs. 
 
 ![scheduler](images/scheduler.jpg)
 
-### Our Transformer Results
+### Where are the correct response?
+
+- We've seen that at training loss between 1 and 2 the probability of correct response is attractive.
 
 ![transformer_table](images/transformer_table.jpg)
 
-### Our selected Linear Dimension of Linformer that reached training loss between 1 and 2
+### What are linear dimension for Linformer that reached loss of 2
+
+- K between 32 and 256 could reach loss of 2
 
 ![linformer_chart](images/linformer_chart.jpg)
 
 ### Our Linformer Results
 
+- K = 32 works better with simple question
+- K = 256 works better with more sophisticated question
+
 ![linformer_table](images/linformer_table.jpg)
+
+### Comparing total execution time at 500 epochs
+
+- Linformer does not reduce inference time for Conversational Chatbot
+
+![time_to_reach_500_epoch](images/time_to_reach_500_epoch.jpg)
+
+## Conclusion
+
+Although we have successfully built Conversational Chatbot on both Transformer and Linformer, our Linformer does not reduce inference time when compared to traditional Transformer. The reason is that Conversational Chatbot usually contain less than 32 words for each utterance. Instead of reducing trainable parameters, we increase the trainable parameter by introducing E and F matrices. Rather than computing only 3 matrices QKV, we now have 5 matrices to work with.
 
 ## <a id="references">References</a>
 
