@@ -38,7 +38,7 @@ class LinformerMultiHeadAttention(nn.Module):
         if explain: print('q, k', q.shape, k.shape)
         # matrix multiplication is done using the last two dimensions
         # (batch_size,num_heads,q_seq_len,dim_k)X(batch_size,num_heads,dim_k,k_seq_len)
-        #(batch_size,num_heads,q_seq_len,k_seq_len)
+        # (batch_size,num_heads,q_seq_len,k_seq_len)
         scores = torch.matmul(q, k) / math.sqrt(dim_k) 
         if explain: print('scores.shape', scores.shape)
         if mask is not None:
