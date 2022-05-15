@@ -17,9 +17,8 @@ $ pip install -r requirements.txt
 $ python main.py
 
 # A successful should look like this
-
-![main](images/main.jpg)
 ```
+![main](images/main.jpg)
 
 ## A description of the repository and code structure
 
