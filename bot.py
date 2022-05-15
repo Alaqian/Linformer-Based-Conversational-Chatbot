@@ -13,7 +13,7 @@ def main():
 	#Parse command line args
 	parser = argparse.ArgumentParser(description='Create Chatbot Instance')
 	
-	parser.add_argument('-w', '--weight', default="data_weight", type=str, help='Name to save weights at /saved/weights/<name>')
+	parser.add_argument('--weight', default="data_weight", type=str, help='Name to save weights at /saved/weights/<name>')
 	parser.add_argument('--model', default="linformer", type=str, help='Model: Transformer or Linformer')
 	parser.add_argument('--linear_dimension', default=256, type=int, help='Linear dimension of Linformer')
 
