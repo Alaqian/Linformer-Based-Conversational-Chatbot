@@ -25,7 +25,7 @@ $ python main.py
 ```
 ![main](images/main.jpg)
 
-## Main.py Adjustable parameters
+## Main.py adjustable parameters
 | Description | DType       | Arguments  | Default | 
 | ----------- | ----------- | ---------- | ------- | 
 | Name to save weights, at /saved/weights/<name> | string | --weight | "weight" | 
@@ -51,9 +51,9 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 
 # You should see a prompt like this:
 ```
-![main](images/bot.jpg)
+![bot](images/bot.jpg)
 
-## Bot.py Adjustable parameters
+## Bot.py adjustable parameters
 | Description | DType       | Arguments  | Default | 
 | ----------- | ----------- | ---------- | ------- | 
 | Name to save weights, at /saved/weights/<name> | string | --weight | "weight" | 
@@ -66,13 +66,32 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 - Default saved weight location is "saved/weight" directory.
 - Default data location is "saved/data" directory.
       
-## Results (including charts/tables) and your observations  
+## Results
 
+### Our selected Learning Rate
+
+![learning_rate](images/learning_rate.jpg)
+
+### Our selected Scheduler
+
+![scheduler](images/scheduler.jpg)
+
+### Our Transformer Results
+
+![transformer_table](images/transformer_table.jpg)
+
+### Our selected Linear Dimension of Linformer that reached training loss between 1 and 2
+
+![linformer_chart](images/linformer_chart.jpg)
+
+### Our Linformer Results
+
+![linformer_table](images/linformer_table.jpg)
 
 ## <a id="references">References</a>
 
-[1] Linformer: Self-Attention with Linear Complexity: https://arxiv.org/pdf/2006.04768.pdf
-[2] Cornell Movie-Dialog Corpus Dataset: https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html
-[3] Deep Learning Based Chatbot Models,  https://arxiv.org/pdf/1908.08835.pdf
-[4] Attention is All You Need, https://arxiv.org/abs/1706.03762
-[5] Chloerobotics, https://github.com/chloerobotics/chloebot
+- [1] Linformer: Self-Attention with Linear Complexity: https://arxiv.org/pdf/2006.04768.pdf
+- [2] Cornell Movie-Dialog Corpus Dataset: https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html
+- [3] Deep Learning Based Chatbot Models,  https://arxiv.org/pdf/1908.08835.pdf
+- [4] Attention is All You Need, https://arxiv.org/abs/1706.03762
+- [5] Chloerobotics, https://github.com/chloerobotics/chloebot
