@@ -23,7 +23,7 @@ def main():
 	parser.add_argument('--verbose', default=False, help='Print adaptive learning rate?')
 	parser.add_argument('--modeler', default="linformer", help='Type: transformer or linformer')
 	parser.add_argument('--scheduler', default="plateau", help='Scheduler: plateau, cosine or warmup')
-	parser.add_argument('--linear_dimension', default=128, type=int, help='Linear Dimension of Attention Layers')
+	parser.add_argument('--linear_dimension', default=256, type=int, help='Linear Dimension of Attention Layers')
 	parser.add_argument('--dimension', default=512, type=int, help='Dimension of Attention Layers')
 	parser.add_argument('--nlayers', default=6, type=int, help='Number of Attention Layers')
 	parser.add_argument('--heads', default=8, type=int, help='Number of Attention Heads')
@@ -62,7 +62,7 @@ def main():
 	linear_dimension = args.linear_dimension
 
 	#There is no theoretical limit on the input length (ie number of tokens for a sentence in NLP) 
-	#for transformers. However in practice, longer inputs will consume more memory.
+	#However in practice, longer inputs will consume more memory.
 	if(args.modeler=="transformer"):
 		model = Transformer(
 			len(train_infield.vocab), 
@@ -104,65 +104,6 @@ def main():
 
 	print('==> Start Training..' , flush=True)
 	trainer(model, train_data_iter, train_opt, test_data_iter, test_opt, optimizer, scheduler, args.scheduler)
-	# if(args.modeler=="transformer"):
-	# 	transformer_trainer(model, train_data_iter, train_opt, test_data_iter, test_opt, optimizer, scheduler, args.scheduler)
-	# elif(args.modeler=="linformer"):
-	# 	linformer_trainer(model, train_data_iter, train_opt, test_data_iter, test_opt, optimizer, scheduler, args.scheduler)
-	# else:
-	# 	print("Please choose modeler between \"transformer\" and \"linformer\"")
-	# 	quit()
+
 if __name__ == "__main__":
 	main()	
-
-# import math, copy, sys
-# import torch
-# import argparse
-
-# from scripts.MoveData import *
-# from scripts.Transformer import *
-# from scripts.TalkTrain import *
-
-# def main():
-# 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# 	print(device)
-# 	# Parse command line args
-# 	parser = argparse.ArgumentParser(description='Transformer chatbot trainer')
-
-# 	parser.add_argument('-w', '--weight', default="data_weight", type=str, help='Name to save weights at /saved/weights/<name>')
-# 	parser.add_argument('-tr', '--train', default="data_train", type=str, help='Name to train file at /saved/data/<name>')
-# 	parser.add_argument('-te', '--test', default="data_test", type=str, help='Name to test file at /saved/data/<name>')
-# 	parser.add_argument('-b', '--batch', default=32, type=int, help='Batch size')
-# 	parser.add_argument('-e', '--epoch', default=200, type=int, help='# of epochs')
-# 	parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
-# 	args = parser.parse_args()
-
-# 	print('==> Program Start..')
-# 	print(f'==> Batch Size: {args.batch}')
-# 	print(f'==> Number of epochs: {args.epoch}')
-# 	print(f'==> Name to save weights at saved/weights/{args.weight}')
-# 	print(f'==> Name to train data at saved/data/{args.train}')
-# 	print(f'==> Name to test data at saved/data/{args.test}')
-	
-# 	opt = Options(batchsize=args.batch, device=torch.device(device), epochs=args.epoch, lr=args.lr, max_len = 20, save_path = f'saved/weights/{args.weight}')
-# 	#opt = Options(batchsize=256, device=torch.device("cuda:0"), epochs=args.b, lr=0.01, max_len = 50, save_path = f'/weights/{args.weight}')
-# 	print('==> Load Dataset..')
-# 	train_data_iter, train_infield, train_outfield, train_opt = json2datatools(path = f'saved/data/{args.train}.json', opt=opt)
-# 	print('train vocab size', len(train_infield.vocab), 'train vocab size', len(train_outfield.vocab))
-# 	test_data_iter, test_infield, test_outfield, test_opt = json2datatools(path = f'saved/data/{args.test}.json', opt=opt)
-# 	print('input vocab size', len(test_infield.vocab), 'output vocab size', len(test_outfield.vocab))
-	
-# 	print('==> Build Model..')
-# 	# Attention is All You Need's setting
-# 	emb_dim, n_layers, heads, dropout = 512, 6, 8, 0.1
-# 	model = Transformer(len(train_infield.vocab), len(train_outfield.vocab), emb_dim, n_layers, heads, dropout)
-	
-# 	optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.98), eps=1e-9)
-# 	scheduler = AttentionLRscheduler(model_size = emb_dim, warmup_steps = 4000, optimizer = optimizer)
-	
-# 	# scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.9, patience=3)
-
-# 	print('==> Start Training..')
-# 	model = trainer(model, train_data_iter, train_opt, test_data_iter, test_opt, optimizer, scheduler)
-
-# if __name__ == "__main__":
-# 	main()	
