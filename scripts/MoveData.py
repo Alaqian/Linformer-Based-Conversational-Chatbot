@@ -25,13 +25,12 @@ class Tokenizer(object):
         self.tweettokenizer = TweetTokenizer()
             
     def tokenize(self, sentence):
+        ## TOKENIZE input in to writing English
         first,last = False,False
         sentence = sentence.lower()
-        # print("before sp", sentence)
         if "+++" in sentence:
             first, *sentence, last = sentence.split("+++")
             sentence = sentence[0]
-            # print("after sp", sentence)
         sentence = re.sub(r"i'm", "i am", sentence)
         sentence = re.sub(r"he's", "he is", sentence)
         sentence = re.sub(r"she's", "she is", sentence)
@@ -53,7 +52,6 @@ class Tokenizer(object):
         sentence = re.sub(r"'til", "until", sentence)
         sentence = re.sub(
         r"[\*\"“”\n\\…\+\-\/\=\(\)‘•:\[\]\|’\;]", " ", str(sentence))
-        #r"[\*\"“”\n\\…\+\-\/\=\(\)‘•:\[\]\|’\!;]", " ", str(sentence))
         sentence = re.sub(r"[ ]+", " ", sentence)
         sentence = re.sub(r"\.+", " . ", sentence)
         sentence = re.sub(r"\!+", " ! ", sentence)
@@ -67,31 +65,7 @@ class Tokenizer(object):
             sentence.insert(0, first)
         if last:
             sentence.append(last)
-        # sentence = self.tweettokenizer.tokenize(sentence)
-        # print(sentence)
         return sentence 
-        # sentence = sentence.replace("can't", "can not")
-        # sentence = sentence.replace("won't", "will not")
-        # sentence = sentence.replace("n't", " n't")
-        # sentence = sentence.replace("'s", " 's")
-        # sentence = sentence.replace("'m", " 'm")
-        # sentence = sentence.replace("'ll", " 'll")
-        # sentence = sentence.replace("'d", " 'd")
-        # sentence = sentence.replace("'ve", " 've")
-        # sentence = re.sub(
-        # r"[\*\"“”\n\\…\+\-\/\=\(\)‘•:\[\]\|’\;]", " ", str(sentence))
-        # #r"[\*\"“”\n\\…\+\-\/\=\(\)‘•:\[\]\|’\!;]", " ", str(sentence))
-        # sentence = re.sub(r"[ ]+", " ", sentence)
-        # sentence = re.sub(r"\.+", " . ", sentence)
-        # sentence = re.sub(r"\!+", "!", sentence)
-        # sentence = re.sub(r"\,+", ",", sentence)
-        # sentence = re.sub(r"\?+", "?", sentence)
-        # sentence = re.sub(r"\$+", " $ ", sentence)
-        # sentence = re.sub(r"\#+", " # ", sentence)
-        # sentence = sentence.lower()
-        # sentence = sentence.strip()
-        # sentence = self.tweettokenizer.tokenize(sentence)
-        # return sentence 
 
 class MyIterator(data.Iterator):
     '''
@@ -128,7 +102,9 @@ def batch_size_fn(new, count, sofar):
     return max(src_elements, tgt_elements)
 
 def json2datatools(path = None, tokenizer = None, opt = None, train=True, shuffle=True):
-
+    '''
+    Convert input to JSON
+    '''
     if opt == None:
         opt = Options()
         opt.batchsize = 4
@@ -140,6 +116,7 @@ def json2datatools(path = None, tokenizer = None, opt = None, train=True, shuffl
     if tokenizer == None:
         tokenizer = Tokenizer()
         
+    # TORCH TEXT function data.Field use to extract information from field setting
     input_field = data.Field(lower=True, tokenize=tokenizer.tokenize, pad_token='<pad>')
     output_field = data.Field(lower=True, tokenize=tokenizer.tokenize, 
                             unk_token='<unk>', init_token='<sos>', eos_token='<eos>', pad_token='<pad>')
