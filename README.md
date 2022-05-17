@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Transformer has revolutionized the Natural Language Processing field with the attention mechanism. Some of the groundbreaking NLP models (GPT3 and BERT) of recent years are all based on transformer. However, the time and space complexity of transformer is largely dependent on the size of the input sequence. More specifically, the self-attention mechanism of transformer has a time complexity of O(n2) where n is the length of input sequence. Wang et. al. \[[1](#references)\] proposed Linformer, a linear complexity O(n) self-attention mechanism, that can speed up the inference speed of the model significantly. We sought to find whether Linformer could be used to train and reduce the inference time in the case of conversational Chatbot, where training input sequences’ lengths are varied.
+Transformer has revolutionized the Natural Language Processing field with the attention mechanism. Some of the groundbreaking NLP models (GPT3 and BERT) of recent years are all based on transformer. However, the time and space complexity of transformer is largely dependent on the size of the input sequence. More specifically, the self-attention mechanism of transformer has a time complexity of O(n2) where n is the length of input sequence. Wang et. al. \[[1](#references)\] proposed Linformer, a linear complexity O(n) self-attention mechanism, that can speed up the total execution time of the model significantly. We sought to find whether Linformer could be used in the case of conversational Chatbot, where training input sequences’ lengths are varied.
 
 ## Main requirements
 - Python 3.6 to 3.8 (3.6 preferred)*
@@ -102,13 +102,13 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 
 ### Comparing total execution time at 500 epochs
 
-- Linformer does not reduce inference time for Conversational Chatbot
+- Linformer does not reduce total execution time for Conversational Chatbot
 
 <img src="https://github.com/katsamapol/chatbot/blob/main/images/time_to_reach_500_epoch.jpg" style="width:75%; margin:auto;">
 
 ## Conclusion
 
-Although we have successfully built Conversational Chatbot on both Transformer and Linformer, our Linformer does not reduce inference time when compared to traditional Transformer. The reason is that Conversational Chatbot usually contain less than 32 words for each utterance. Instead of reducing trainable parameters, we increase the trainable parameter by introducing E and F matrices. Rather than computing only 3 matrices QKV, we now have 5 matrices to work with.
+Although we have successfully built Conversational Chatbot on both Transformer and Linformer, our Linformer does not reduce total execution time when compared to traditional Transformer. The reason is that Conversational Chatbot usually contain less than 32 words for each utterance. Instead of reducing trainable parameters, we increase the trainable parameter by introducing E and F matrices. Rather than computing only 3 matrices QKV, we now have 5 matrices to work with.
 
 ## <a id="references">References</a>
 
