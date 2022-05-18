@@ -1,8 +1,8 @@
-# chatbot-Transformer-&-Linformer
+# Linformer Based Conversational  Chatbot
 
 ## Introduction
 
-Transformer has revolutionized the Natural Language Processing field with the attention mechanism. Some of the groundbreaking NLP models (GPT3 and BERT) of recent years are all based on transformer. However, the time and space complexity of transformer is largely dependent on the size of the input sequence. More specifically, the self-attention mechanism of transformer has a time complexity of O(n2) where n is the length of input sequence. Wang et. al. \[[1](#references)\] proposed Linformer, a linear complexity O(n) self-attention mechanism, that can speed up the total execution time of the model significantly. We sought to find whether Linformer could be used in the case of conversational Chatbot, where training input sequences’ lengths are varied.
+Transformer has revolutionized the Natural Language Processing field with the attention mechanism. Some of the groundbreaking NLP models (GPT3 and BERT) of recent years are all based on transformer. However, the time and space complexity of transformer is largely dependent on the size of the input sequence. More specifically, the self-attention mechanism of transformer has a time complexity of O(n2) where n is the length of input sequence. Wang et. al. \[[1](#references)\] proposed Linformer, a linear complexity O(n) self-attention mechanism, that can speed up the inference speed of the model significantly. We sought to find whether Linformer could be used to train and reduce the inference time while still produce a decent outcome in the case of conversational Chatbots, where training input sequences’ lengths are varied but mostly short.
 
 ## Main requirements
 - Python 3.6 to 3.8 (3.6 preferred)*
@@ -11,7 +11,7 @@ Transformer has revolutionized the Natural Language Processing field with the at
 
 ## Special Thanks
 
-This GitHub Repository's implementation heavily influenced by Chloerobotics \[[5](#references)\]
+This GitHub Repository's implementation heavily influenced by Clam004 \[[5](#references)\]
 
 ## How to Start
 ```
@@ -95,8 +95,8 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 
 ### Our Linformer Results
 
-- K = 32 works better with simple question
-- K = 256 works better with more sophisticated question
+- K <= 64 works better with simple question
+- K >= 128 works better with more sophisticated question
 
 ![linformer_table](images/linformer_table.jpg)
 
@@ -108,7 +108,12 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 
 ## Conclusion
 
-Although we have successfully built Conversational Chatbot on both Transformer and Linformer, our Linformer does not reduce total execution time when compared to traditional Transformer. The reason is that Conversational Chatbot usually contain less than 32 words for each utterance. Instead of reducing trainable parameters, we increase the trainable parameter by introducing E and F matrices. Rather than computing only 3 matrices QKV, we now have 5 matrices to work with.
+In this project we trained various chatbots with Transformer and Linformer using different learning rates, schedulers, and values for k.
+
+Using a subjective model evaluation method, we determined that lower training loss models can produce higher percentage of valid conversational responses. Linformer models with high k values tended to have similar training loss patterns as regular transformer models. At k<=64 the model worked better with simple utterances while at k>=128 the model seemed to be better at handling more sophisticated utterances. The Linformer was unable to reduce training time or inference time as we had initially hypothesized. Since most conversations contain less than 32 words, Linformer could not utilize E and F matrices effectively. In fact, since the Linformer had 2 extra parameters, in these instances the model took longer to train and test.
+	
+For further work, the effect of changing the k value to the quality of responses could be studies. During the experimentation, higher k value models tended to handle more sophisticated utterances better.  Furthermore, the study can be repeated with using longer forms of text that have an input length sufficiently larger than then linear dimension. This would enable the Linformer to utilize the E and F matrices.  For instance, the bot could be trained on full movie scripts to generate a movie script of its own or it could be used to generate posts on a forum by looking at other posts.
+
 
 ## <a id="references">References</a>
 
@@ -116,4 +121,4 @@ Although we have successfully built Conversational Chatbot on both Transformer a
 - [2] Cornell Movie-Dialog Corpus Dataset: https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html
 - [3] Deep Learning Based Chatbot Models,  https://arxiv.org/pdf/1908.08835.pdf
 - [4] Attention is All You Need, https://arxiv.org/abs/1706.03762
-- [5] Chloerobotics, https://github.com/chloerobotics/chloebot
+- [5] Clam004 Chat Transformer, https://github.com/clam004/chat-transformer
