@@ -7,7 +7,7 @@
 - [How to Run](#How-to-Run)
 - [Folder Structure](#Folder-Structure)
 - [Main.py Adjustable Parameters](#Main.py-adjustable-parameters)
-- [How to chat with your saved model](#How-to-chat-with-your saved model)
+- [How to chat with your saved model](#How-to-chat-with-your-saved-model)
 - [Bot.py Adjustable Parameters](#Bot.py-adjustable-parameters)
 - [Repository and Code Structure](#Repository-and-code-structure)
 - [Results](#Results)
