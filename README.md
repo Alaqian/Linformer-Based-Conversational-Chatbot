@@ -1,5 +1,25 @@
 # Linformer Based Conversational  Chatbot
 
+## Contents
+- [Introduction](#Introduction)
+- [Main requirements](#Main-requirements)
+- [Special Thanks](#Special-Thanks)
+- [How to Run](#How-to-Run)
+- [Folder Structure](#Folder-Structure)
+- [Main.py Adjustable Parameters](#Main.py-adjustable-parameters)
+- [How to chat with your saved model](#How-to-chat-with-your saved model)
+- [Bot.py Adjustable Parameters](#Bot.py-adjustable-parameters)
+- [Repository and Code Structure](#Repository-and-code-structure)
+- [Results](#Results)
+	- [Selecting scheduler and number of epochs](#Selecting-scheduler-and-number-of-epochs)
+	- [Where are the correct responses?](#Where-are-the-correct-responses?)
+	- [Introduction](#Introduction)
+	- [What is the linear dimension for Linformer that reached loss of 2](#What-is-the-linear-dimension-for-Linformer-that-reached-loss-of-2)
+	- [Our Linformer Results](#Our-Linformer-Results)
+	- [Comparing total execution time at 500 epochs](#Comparing-total-execution-time-at-500-epochs)
+- [Conclusion](#Conclusion)
+- [References](#References)
+
 ## Introduction
 
 Transformer has revolutionized the Natural Language Processing field with the attention mechanism. Some of the groundbreaking NLP models (GPT3 and BERT) of recent years are all based on transformer. However, the time and space complexity of transformer is largely dependent on the size of the input sequence. More specifically, the self-attention mechanism of transformer has a time complexity of O(n2) where n is the length of input sequence. Wang et. al. \[[1](#references)\] proposed Linformer, a linear complexity O(n) self-attention mechanism, that can speed up the inference speed of the model significantly. We sought to find whether Linformer could be used to train and reduce the inference time while still produce a decent outcome in the case of conversational Chatbots, where training input sequences’ lengths are varied but mostly short.
@@ -13,7 +33,7 @@ Transformer has revolutionized the Natural Language Processing field with the at
 
 This GitHub Repository's implementation heavily influenced by Clam004 \[[5](#references)\]
 
-## How to Start
+## How to Run
 ```
 # Install dependencies
 $ pip install -r requirements.txt
@@ -25,7 +45,7 @@ $ python main.py
 ```
 ![main](images/main.jpg)
 
-## Main.py adjustable parameters
+## Main.py Adjustable Parameters
 | Description | DType       | Arguments  | Default | 
 | ----------- | ----------- | ---------- | ------- | 
 | Name to save weights, at /saved/weights/<name> | string | --weight | "weight" | 
@@ -53,14 +73,14 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 ```
 ![bot](images/bot.jpg)
 
-## Bot.py adjustable parameters
+## Bot.py Adjustable Parameters
 | Description | DType       | Arguments  | Default | 
 | ----------- | ----------- | ---------- | ------- | 
 | Name to save weights, at /saved/weights/<name> | string | --weight | "weight" | 
 | Modeler: transformer or linformer | string | --modeler | "linformer" | 
 | Linear Dimension of Linformer | int | --linear_dimension | 256 | 
 
-## Repository and code structure
+## Repository and Code Structure
 - Execution files are locating in the root directory.
 - Transfomer model, Linformer model, and Tokenizer script are in "scripts" directory.
 - Default saved weight location is "saved/weight" directory.
@@ -81,13 +101,13 @@ $ python bot.py --model linformer --weight PATH -- linear_dimension SAME_AS_WEIG
 
 ![scheduler](images/scheduler.jpg)
 
-### Where are the correct response?
+### Where are the correct responses?
 
 - We've seen that at training loss between 1 and 2 the probability of correct response is attractive.
 
 ![transformer_table](images/transformer_table.jpg)
 
-### What are linear dimension for Linformer that reached loss of 2
+### What is the linear dimension for Linformer that reached loss of 2
 
 - K between 32 and 256 could reach loss of 2
 
