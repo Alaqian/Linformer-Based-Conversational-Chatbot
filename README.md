@@ -27,7 +27,7 @@ Transformer has revolutionized the Natural Language Processing field with the at
 ## Main requirements
 - Python 3.6 to 3.8 (3.6 preferred)*
 
-\*Require for many dependencies in requirement.txt
+*The list of dependencies required to run this project is in the file [requirements.txt](requirements.txt)
 
 ## Special Thanks
 
